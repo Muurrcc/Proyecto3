@@ -1,0 +1,29 @@
+apiVersion: 1
+
+datasources:
+  - name: InfluxDB (Renfe)
+    uid: influxdb-renfe
+    type: influxdb
+    access: proxy
+    url: http://influxdb:8086
+    user: root
+    jsonData:
+      version: InfluxQL
+      dbName: renfe
+      httpMode: GET
+    secureJsonData:
+      password: root
+    isDefault: true
+
+  - name: PostgreSQL (practica3)
+    uid: postgres-practica3
+    type: grafana-postgresql-datasource
+    access: proxy
+    url: postgres:5432
+    user: practica3
+    database: practica3
+    jsonData:
+      sslmode: disable
+      postgresVersion: 1600
+    secureJsonData:
+      password: practica3

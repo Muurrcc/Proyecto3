@@ -1,0 +1,14 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "Practica3 - PostgreSQL",
+      "Group": "Servers",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "practica3",
+      "Username": "practica3",
+      "SSLMode": "prefer",
+      "PassFile": "/var/lib/pgadmin/pgpass"
+    }
+  }
+}

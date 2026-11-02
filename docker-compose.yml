@@ -1,0 +1,130 @@
+name: practica3
+
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: p3-mosquitto
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./config/mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_log:/mosquitto/log
+
+  telegraf:
+    image: telegraf:latest
+    container_name: p3-telegraf
+    volumes:
+      - ./config/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+    depends_on:
+      - mosquitto
+      - influxdb
+
+  influxdb:
+    image: influxdb:1.8
+    container_name: p3-influxdb
+    ports:
+      - "8086:8086"
+    volumes:
+      - influxdb_data:/var/lib/influxdb
+    environment:
+      - INFLUXDB_DB=renfe
+      - INFLUXDB_ADMIN_USER=root
+      - INFLUXDB_ADMIN_PASSWORD=root
+      - INFLUXDB_HTTP_AUTH_ENABLED=true
+
+  postgres:
+    image: postgres:16
+    container_name: p3-postgres
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_USER=practica3
+      - POSTGRES_PASSWORD=practica3
+      - POSTGRES_DB=practica3
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U practica3 -d practica3"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  flask:
+    build: ./web
+    container_name: p3-flask
+    ports:
+      - "5002:5000"
+    environment:
+      - PG_DSN=dbname=practica3 user=practica3 password=practica3 host=postgres port=5432
+      - INFLUX_URL=http://influxdb:8086/query
+      - INFLUX_DB=renfe
+      - INFLUX_USER=root
+      - INFLUX_PASS=root
+      - GRAFANA_PUBLIC_URL=http://localhost:3001
+    depends_on:
+      postgres:
+        condition: service_healthy
+      influxdb:
+        condition: service_started
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: p3-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./config/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./config/grafana/dashboards:/etc/grafana/dashboards:ro
+    depends_on:
+      - influxdb
+      - postgres
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: p3-pgadmin
+    ports:
+      - "5050:80"
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@admin.com
+      - PGADMIN_DEFAULT_PASSWORD=admin
+      - PGADMIN_CONFIG_SERVER_MODE=False
+      - PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED=False
+      - PGADMIN_SERVER_JSON_FILE=/pgadmin4/servers.json
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+      - ./config/pgadmin/servers.json:/pgadmin4/servers.json:ro
+      - ./config/pgadmin/pgpass:/pgpass-src:ro
+    # libpq exige pgpass con permisos 600: se copia al volumen antes de arrancar
+    entrypoint: ["/bin/sh", "-c", "cp /pgpass-src /var/lib/pgadmin/pgpass && chmod 600 /var/lib/pgadmin/pgpass && exec /entrypoint.sh"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  chronograf:
+    image: chronograf:1.10
+    container_name: p3-chronograf
+    ports:
+      - "8888:8888"
+    environment:
+      - INFLUXDB_URL=http://influxdb:8086
+      - INFLUXDB_USERNAME=root
+      - INFLUXDB_PASSWORD=root
+    volumes:
+      - chronograf_data:/var/lib/chronograf
+    depends_on:
+      - influxdb
+
+volumes:
+  mosquitto_data:
+  mosquitto_log:
+  influxdb_data:
+  postgres_data:
+  grafana_data:
+  pgadmin_data:
+  chronograf_data:

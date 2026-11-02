@@ -1,0 +1,1518 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Trenes Renfe</title>
+
+  <style>
+    :root {
+      --bg: #fafaf9;
+      --panel: #fff;
+      --ink: #1c1917;
+      --mute: #78716c;
+      --line: #e7e5e4;
+      --accent: #8b1a8b;
+      --ok: #15803d;
+      --err: #b91c1c;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0c0a09;
+        --panel: #1c1917;
+        --ink: #fafaf9;
+        --mute: #a8a29e;
+        --line: #292524;
+        --accent: #d946ef;
+        --ok: #4ade80;
+        --err: #f87171;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 15px/1.5 system-ui, sans-serif;
+    }
+
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px 16px 48px;
+    }
+
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      margin: 0;
+    }
+
+    h2 {
+      font-size: .8rem;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--mute);
+      margin: 0 0 10px;
+    }
+
+    p.subtitulo {
+      margin: 4px 0 0;
+      color: var(--mute);
+    }
+
+    a.boton {
+      display: inline-block;
+      padding: 7px 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--ink);
+      text-decoration: none;
+      background: var(--panel);
+      margin-left: 6px;
+    }
+
+    a.boton.principal {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    button.boton {
+      font: inherit;
+      cursor: pointer;
+      padding: 7px 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--ink);
+      background: var(--panel);
+      margin-left: 6px;
+    }
+
+    button.boton.activado {
+      border-color: var(--ok);
+      color: var(--ok);
+    }
+
+    .cifras {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .cifra {
+      min-width: 0;
+    }
+
+    @media (max-width: 1100px) {
+      .cifras {
+        grid-template-columns: repeat(4, 1fr);
+      }
+
+      .cifra:last-child {
+        grid-column: span 2;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .cifras {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .cifra:last-child {
+        grid-column: span 2;
+      }
+    }
+
+    .cifra,
+    section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px 16px;
+    }
+
+    .cifra b {
+      display: block;
+      font-size: 1.8rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .cifra span {
+      color: var(--mute);
+      font-size: .85rem;
+    }
+
+    section {
+      overflow-x: auto;
+    }
+
+    section.seccion-del-mapa {
+      margin-bottom: 12px;
+      padding: 14px 16px 16px;
+    }
+
+    #mapa {
+      height: 600px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+    }
+
+    .leyenda-del-mapa {
+      background: var(--panel);
+      color: var(--ink);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: .78rem;
+      line-height: 1.9;
+      max-height: 540px;
+      overflow-y: auto;
+    }
+
+    .leyenda-del-mapa h4 {
+      margin: 6px 0 0;
+      font-size: .7rem;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--mute);
+    }
+
+    .leyenda-del-mapa h4:first-child {
+      margin-top: 0;
+    }
+
+    .leyenda-del-mapa .fila-de-leyenda {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .leyenda-del-mapa .fila-de-leyenda svg,
+    .leyenda-del-mapa .fila-de-leyenda i {
+      flex: none;
+    }
+
+    .leyenda-del-mapa i {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin: 0 8px 0 0;
+    }
+
+    .leyenda-del-mapa summary {
+      cursor: pointer;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+
+    .leaflet-control-layers {
+      background: var(--panel);
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+
+    .leaflet-control-layers label {
+      color: var(--ink);
+    }
+
+    .icono-de-tren {
+      display: block;
+      overflow: visible;
+      filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .55));
+    }
+
+    .etiqueta-del-tren {
+      display: none;
+      position: absolute;
+      left: 50%;
+      top: 100%;
+      transform: translateX(-50%);
+      margin-top: 1px;
+      padding: 1px 3px;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, .92);
+      color: #1c1917;
+      font: 600 9px/1.2 system-ui, sans-serif;
+      white-space: nowrap;
+      pointer-events: none;
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, .25);
+    }
+
+    .mostrar-etiquetas-de-trenes .etiqueta-del-tren {
+      display: block;
+    }
+
+    .selector-de-color {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 4px;
+      max-width: 290px;
+      padding: 4px 6px;
+      background: var(--panel);
+      color: var(--ink);
+      font-size: .75rem;
+    }
+
+    .selector-de-color button {
+      border: 1px solid var(--line);
+      background: transparent;
+      color: inherit;
+      border-radius: 6px;
+      padding: 2px 8px;
+      cursor: pointer;
+      font: inherit;
+    }
+
+    .selector-de-color button.activado {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .selector-de-color .casilla-con-etiqueta {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-left: 6px;
+      padding-left: 8px;
+      border-left: 1px solid var(--line);
+      cursor: pointer;
+    }
+
+    .selector-de-color .casilla-con-etiqueta input {
+      margin: 0;
+      accent-color: #dc2626;
+    }
+
+    .controles-de-tiempo {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+      font-size: .8rem;
+    }
+
+    .controles-de-tiempo button,
+    .controles-de-tiempo select {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--ink);
+      border-radius: 6px;
+      padding: 4px 9px;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .controles-de-tiempo button.activado {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    #boton-reproducir {
+      min-width: 34px;
+    }
+
+    .pista-del-deslizador {
+      flex: 1 1 260px;
+      min-width: 180px;
+    }
+
+    #histograma-de-cobertura {
+      display: block;
+      width: 100%;
+      height: 24px;
+      color: var(--accent);
+      opacity: .55;
+    }
+
+    #deslizador-del-tiempo {
+      width: 100%;
+      margin: 0;
+      accent-color: var(--accent);
+    }
+
+    #texto-del-instante {
+      min-width: 150px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    #nota-del-pasado {
+      display: block;
+      margin-top: 6px;
+      color: var(--mute);
+    }
+
+    #nota-del-pasado[hidden] {
+      display: none;
+    }
+
+    .marcador-de-incidente {
+      display: inline-block;
+      transform: translate(-50%, -50%);
+      padding: 2px 6px;
+      border-radius: 6px;
+      background: #facc15;
+      color: #111;
+      border: 2px solid #111;
+      font: 700 14px/1 system-ui, sans-serif;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, .5);
+    }
+
+    .marcador-de-incidente.en-la-leyenda {
+      transform: none;
+      box-shadow: none;
+      font-size: 11px;
+      padding: 1px 4px;
+    }
+
+    .texto-del-incidente {
+      margin: .5em 0 0;
+      font-size: .8rem;
+      line-height: 1.4;
+    }
+
+    .marcador-de-cancelados {
+      display: inline-block;
+      transform: translate(-50%, -50%);
+      padding: 3px 7px;
+      border-radius: 999px;
+      background: #dc2626;
+      color: #fff;
+      border: 2px solid #fff;
+      font: 700 11px/1 system-ui, sans-serif;
+      white-space: nowrap;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, .5);
+    }
+
+    .marcador-de-cancelados.en-la-leyenda {
+      transform: none;
+      box-shadow: none;
+    }
+
+    .lista-de-trenes-en-popup {
+      margin-top: 6px;
+      font-size: .8rem;
+      line-height: 1.5;
+    }
+
+    .cuadrito-de-color {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      margin-right: 6px;
+      vertical-align: -1px;
+    }
+
+    @media (max-width: 480px) {
+      #mapa {
+        height: 460px;
+      }
+    }
+  </style>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+</head>
+
+<body>
+<main>
+
+  <header>
+    <div>
+      <h1>Trenes Renfe</h1>
+      <p class="subtitulo">
+        Cercan&iacute;as, Media y Larga Distancia y alta velocidad &middot;
+        InfluxDB &rarr; Flask &rarr; PostgreSQL &middot; sincroniza cada {{ intervalo }} s.
+      </p>
+    </div>
+
+    <nav>
+      <button class="boton activado" id="boton-recarga-automatica" type="button" title="Recargar la pagina cada 30 s">
+        Recarga autom&aacute;tica: s&iacute;
+      </button>
+      <a class="boton" href="{{ url_for('sincronizar_manualmente') }}">Sincronizar ahora</a>
+      <a class="boton principal" href="{{ grafana }}">Abrir Grafana</a>
+    </nav>
+  </header>
+
+
+  <div class="cifras">
+    <div class="cifra">
+      <b id="cifra-trenes_ahora">{{ resumen.trenes_ahora }}</b>
+      <span>trenes con se&ntilde;al</span>
+    </div>
+    <div class="cifra">
+      <b id="cifra-en_movimiento">{{ resumen.en_movimiento }}</b>
+      <span>en movimiento</span>
+    </div>
+    <div class="cifra">
+      <b id="cifra-parados">{{ resumen.parados }}</b>
+      <span>parados</span>
+    </div>
+    <div class="cifra">
+      <b id="cifra-retraso_medio_s">{{ resumen.retraso_medio_s }} s</b>
+      <span>retraso medio ahora</span>
+    </div>
+    <div class="cifra">
+      <b id="cifra-con_retraso">{{ resumen.con_retraso }}</b>
+      <span>con 5 min o m&aacute;s de retraso</span>
+    </div>
+    <div class="cifra">
+      <b id="cifra-cancelados">{{ resumen.cancelados }}</b>
+      <span>viajes cancelados</span>
+    </div>
+    <div class="cifra">
+      <b>{{ resumen.posiciones }}</b>
+      <span>posiciones guardadas</span>
+    </div>
+  </div>
+
+
+  <section class="seccion-del-mapa">
+    <h2>Mapa &middot; <span id="texto-de-cuando-del-mapa">posici&oacute;n actual</span> de los trenes (desde PostgreSQL)</h2>
+
+    <div id="mapa"></div>
+
+    <div class="controles-de-tiempo">
+      <button id="boton-reproducir" title="Reproducir / pausar" aria-label="Reproducir o pausar">&#9654;</button>
+      <button id="boton-diez-minutos-antes" title="10 minutos antes">&laquo; 10&prime;</button>
+
+      <div class="pista-del-deslizador">
+        <svg id="histograma-de-cobertura" viewBox="0 0 1000 24" preserveAspectRatio="none" aria-hidden="true"></svg>
+        <input id="deslizador-del-tiempo" type="range" min="0" max="1" step="60000" value="1"
+               aria-label="Instante que se muestra en el mapa">
+      </div>
+
+      <button id="boton-diez-minutos-despues" title="10 minutos despu&eacute;s">10&prime; &raquo;</button>
+      <span id="texto-del-instante" aria-live="polite">Ahora (en directo)</span>
+
+      <select id="selector-de-velocidad" title="Velocidad de reproducci&oacute;n (segundos de tiempo real por segundo)">
+        <option value="60">&times;60</option>
+        <option value="300" selected>&times;300</option>
+        <option value="900">&times;900</option>
+      </select>
+
+      <select id="selector-de-ventana" title="Tramo de tiempo del slider">
+        <option value="1" selected>&Uacute;ltima hora</option>
+        <option value="6">6 h</option>
+        <option value="24">24 h</option>
+        <option value="0">Todo</option>
+      </select>
+
+      <button id="boton-ahora" class="activado">Ahora</button>
+    </div>
+
+    <small id="nota-del-pasado" hidden>
+      Mostrando el pasado: el mapa y las cifras de arriba cambian.
+      Las barras muestran de cu&aacute;ndo hay datos (los huecos son momentos en que no se estaba registrando).
+    </small>
+  </section>
+
+</main>
+
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  const SEGUNDOS_ENTRE_RECARGAS_AUTOMATICAS = 30;
+  const MILISEGUNDOS_DE_UN_SALTO_DE_DIEZ_MINUTOS = 600000;
+  const ZOOM_MINIMO_PARA_MOSTRAR_ETIQUETAS_DE_TRENES = 8;
+  const MAXIMO_DE_TRENES_CANCELADOS_EN_UN_POPUP = 40;
+  const ANCHO_MINIMO_DE_PANTALLA_PARA_LEYENDA_ABIERTA = 900;
+
+
+  function leerDelAlmacenamiento(nombreDelAlmacenamiento, clave) {
+    try {
+      return window[nombreDelAlmacenamiento].getItem(clave);
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function guardarEnElAlmacenamiento(nombreDelAlmacenamiento, clave, valor) {
+    try {
+      window[nombreDelAlmacenamiento].setItem(clave, valor);
+    } catch (error) {
+    }
+  }
+
+  function escaparHtml(texto) {
+    const caracteresEscapados = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+    return String(texto == null ? "" : texto).replace(/[&<>"']/g, caracter => caracteresEscapados[caracter]);
+  }
+
+  function obtenerElemento(id) {
+    return document.getElementById(id);
+  }
+
+
+  const recargaAutomatica = {
+    activada: leerDelAlmacenamiento("localStorage", "autorecarga") !== "0",
+    viendoElPasado: false,
+    temporizador: null,
+  };
+  const botonDeRecargaAutomatica = obtenerElemento("boton-recarga-automatica");
+
+  function programarLaRecargaAutomatica() {
+    clearTimeout(recargaAutomatica.temporizador);
+
+    const debeRecargarse = recargaAutomatica.activada && !recargaAutomatica.viendoElPasado;
+    recargaAutomatica.temporizador = debeRecargarse
+      ? setTimeout(() => location.reload(), SEGUNDOS_ENTRE_RECARGAS_AUTOMATICAS * 1000)
+      : null;
+
+    botonDeRecargaAutomatica.classList.toggle("activado", recargaAutomatica.activada);
+    botonDeRecargaAutomatica.innerHTML = "Recarga autom&aacute;tica: " + (recargaAutomatica.activada ? "s&iacute;" : "no");
+  }
+
+  function desactivarLaRecargaMientrasSeVeElPasado() {
+    recargaAutomatica.viendoElPasado = true;
+    programarLaRecargaAutomatica();
+  }
+
+  botonDeRecargaAutomatica.addEventListener("click", () => {
+    recargaAutomatica.activada = !recargaAutomatica.activada;
+    guardarEnElAlmacenamiento("localStorage", "autorecarga", recargaAutomatica.activada ? "1" : "0");
+    programarLaRecargaAutomatica();
+  });
+
+  programarLaRecargaAutomatica();
+
+
+  function leerVistaGuardadaDelMapa() {
+    try {
+      return JSON.parse(leerDelAlmacenamiento("sessionStorage", "vistaDelMapa"));
+    } catch (error) {
+      return null;
+    }
+  }
+
+  const vistaGuardadaDelMapa = leerVistaGuardadaDelMapa();
+  const mapa = L.map("mapa", { worldCopyJump: true }).setView(
+    vistaGuardadaDelMapa ? vistaGuardadaDelMapa.centro : [40.2, -3.7],
+    vistaGuardadaDelMapa ? vistaGuardadaDelMapa.zoom : 6
+  );
+
+  mapa.on("moveend", () => {
+    guardarEnElAlmacenamiento(
+      "sessionStorage",
+      "vistaDelMapa",
+      JSON.stringify({ centro: mapa.getCenter(), zoom: mapa.getZoom() })
+    );
+  });
+
+
+  function crearCapaDeTeselasEsri(nombreDelServicio, opcionesExtra) {
+    return L.tileLayer(
+      `https://server.arcgisonline.com/ArcGIS/rest/services/${nombreDelServicio}/MapServer/tile/{z}/{y}/{x}`,
+      { maxNativeZoom: 16, maxZoom: 19, attribution: "Tiles &copy; Esri", ...opcionesExtra }
+    );
+  }
+
+  function crearMapaBaseGris(tono, conEtiquetas) {
+    const capaBase = crearCapaDeTeselasEsri(`Canvas/World_${tono}_Gray_Base`);
+    if (!conEtiquetas) {
+      return capaBase;
+    }
+
+    const capaDeEtiquetas = crearCapaDeTeselasEsri(`Canvas/World_${tono}_Gray_Reference`, { pane: "shadowPane" });
+    return L.layerGroup([capaBase, capaDeEtiquetas]);
+  }
+
+  const mapasBase = {
+    "Gris": crearMapaBaseGris("Light", true),
+    "Gris sin etiquetas": crearMapaBaseGris("Light", false),
+    "Gris oscuro": crearMapaBaseGris("Dark", true),
+    "Relieve": L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png", {
+      subdomains: "abc",
+      maxZoom: 17,
+      attribution: "&copy; OpenStreetMap, SRTM &middot; OpenTopoMap",
+    }),
+    "Sat&eacute;lite": L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
+      maxZoom: 18,
+      attribution: "Tiles &copy; Esri",
+    }),
+    "Calles": L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: "&copy; OpenStreetMap",
+    }),
+  };
+
+  const nombreDelMapaBaseGuardado = leerDelAlmacenamiento("localStorage", "base");
+  (mapasBase[nombreDelMapaBaseGuardado] || mapasBase["Gris"]).addTo(mapa);
+
+  mapa.on("baselayerchange", evento => {
+    guardarEnElAlmacenamiento("localStorage", "base", evento.name);
+  });
+
+  const controlDeCapas = L.control.layers(mapasBase, {}, { collapsed: true, position: "topright" }).addTo(mapa);
+
+
+  const capaDeViasConvencionales = L.layerGroup().addTo(mapa);
+  const capaDeViasDeAltaVelocidad = L.layerGroup().addTo(mapa);
+  const capaDeLineasDeCercanias = L.layerGroup().addTo(mapa);
+
+  const colorDeLineaPorNucleoYLinea = {};
+
+  fetch("{{ url_for('static', filename='red.geojson') }}")
+    .then(respuesta => respuesta.ok ? respuesta.json() : null)
+    .then(redGeojson => {
+      if (!redGeojson) {
+        return;
+      }
+
+      L.geoJSON(redGeojson, {
+        style: via => via.properties.tipo === "alta_velocidad"
+          ? { color: "#b91c1c", weight: 3, opacity: .75 }
+          : { color: "#475569", weight: 2, opacity: .8 },
+        onEachFeature: (via, capaDeLaVia) => {
+          const capaDestino = via.properties.tipo === "alta_velocidad" ? capaDeViasDeAltaVelocidad : capaDeViasConvencionales;
+          capaDestino.addLayer(capaDeLaVia);
+        },
+      });
+    })
+    .catch(() => {});
+
+  const lineasDeCercaniasCargadas = fetch("{{ url_for('static', filename='lineas.geojson') }}")
+    .then(respuesta => respuesta.json())
+    .then(lineasGeojson => {
+      lineasGeojson.features.forEach(linea => {
+        const claveDeLaLinea = linea.properties.nucleo + "|" + linea.properties.linea;
+        colorDeLineaPorNucleoYLinea[claveDeLaLinea] = linea.properties.color;
+      });
+
+      L.geoJSON(lineasGeojson, {
+        style: linea => ({ color: linea.properties.color, weight: 3, opacity: .9 }),
+        onEachFeature: (linea, capaDeLaLinea) => {
+          capaDeLaLinea.bindTooltip(`${linea.properties.linea} &middot; ${linea.properties.nucleo}`, { sticky: true });
+        },
+      }).addTo(capaDeLineasDeCercanias);
+    })
+    .catch(() => {});
+
+
+  const MARCAS_DE_TREN = {
+    AVE: {
+      nombre: "AVE", etiquetaCorta: "AVE", color: "#7c3aed", ancho: 38,
+      formaDelCuerpo: "M1 2.2Q1 1 2.4 1H17C23 1 28 5.5 31.5 9.2Q32 10 31 10.6L30 11H2.4Q1 11 1 9.8Z",
+      formaDeLasVentanas: "M3.5 3h12v2.2h-12z",
+      formaDeLaCabina: "M18 2.8h3.2l4.6 3H18z",
+      formaDeLaBanda: "M1.6 8.2h24v1.8h-24z",
+    },
+    IRYO: {
+      nombre: "Iryo", etiquetaCorta: "IRYO", color: "#ea580c", ancho: 38,
+      formaDelCuerpo: "M1 2.2Q1 1 2.4 1H17C23 1 28 5.5 31.5 9.2Q32 10 31 10.6L30 11H2.4Q1 11 1 9.8Z",
+      formaDeLasVentanas: "M3.5 3h12v2.2h-12z",
+      formaDeLaCabina: "M18 2.8h3.2l4.6 3H18z",
+      formaDeLaBanda: "M1.6 8.2h24v1.8h-24z",
+    },
+    AVLO: {
+      nombre: "AVLO", etiquetaCorta: "AVLO", color: "#db2777", ancho: 36,
+      formaDelCuerpo: "M1 2.2Q1 1 2.4 1H18C25 1 30 4.5 31.5 8.5V10Q31.5 11 30.5 11H2.4Q1 11 1 9.8Z",
+      formaDeLasVentanas: "M3.5 3h4.6v2.2H3.5zM9.5 3h4.6v2.2H9.5z",
+      formaDeLaCabina: "M17.5 2.8h3.6c2.4.5 4.4 1.8 5.4 3.2H17.5z",
+      formaDeLaBanda: "M1.6 7.6h25v1.1h-25zM1.6 9.2h25v1.1h-25z",
+    },
+    AVANT: {
+      nombre: "Avant", etiquetaCorta: "AVANT", color: "#059669", ancho: 33,
+      formaDelCuerpo: "M1 2.2Q1 1 2.4 1H20C25.5 1 29 4 31 9V10Q31 11 30 11H2.4Q1 11 1 9.8Z",
+      formaDeLasVentanas: "M3.5 3h3.4v2.2H3.5zM8.4 3h3.4v2.2H8.4zM13.3 3h3.4v2.2h-3.4z",
+      formaDeLaCabina: "M19 2.8h3c2 .6 3.8 1.8 4.8 3.2H19z",
+      formaDeLaBanda: "M1.6 8.2h25v1.8h-25z",
+    },
+    ALVIA: {
+      nombre: "Alvia", etiquetaCorta: "ALVIA", color: "#2563eb", ancho: 32,
+      formaDelCuerpo: "M1 2Q1 1 3 1H20Q29 1 31.5 8V10Q31.5 11 30.5 11H3Q1 11 1 10Z",
+      formaDeLasVentanas: "M3.5 3h4.2v2.4H3.5zM9.4 3h4.2v2.4H9.4zM15.3 3h3.2v2.4h-3.2z",
+      formaDeLaCabina: "M20 3h2.2c2 .4 3.4 1.5 4.2 3H20z",
+      formaDeLaBanda: "M1.6 8.3h24.4v1.8H1.6z",
+    },
+    INTERCITY: {
+      nombre: "Intercity", etiquetaCorta: "IC", color: "#1e3a8a", ancho: 33,
+      formaDelCuerpo: "M1 1.8Q1 1 2 1H23.5V11H2Q1 11 1 10ZM25 3.4Q25 2.8 25.8 2.8H29.4Q31 2.8 31 4.4V10Q31 11 30 11H25Z",
+      formaDeLasVentanas: "M3 3h4.5v2.4H3zM9.5 3H14v2.4H9.5zM16 3h4.5v2.4H16z",
+      formaDeLaCabina: "M26.4 4h2.8q.8 0 .8.8V6.2h-3.6z",
+      formaDeLaBanda: "M1.6 8.3h21.4v1.8H1.6zM25.6 8.3h4.6v1.8h-4.6z",
+    },
+    EUROMED: {
+      nombre: "Euromed", etiquetaCorta: "EUROMED", color: "#65a30d", ancho: 33,
+      formaDelCuerpo: "M1 2Q1 1 3 1H19C26 1 30 3 31 8.5V10Q31 11 30 11H3Q1 11 1 10Z",
+      formaDeLasVentanas: "M3.5 3h14.5v2.2H3.5z",
+      formaDeLaCabina: "M19.4 3h2.2c2.4.3 4 1.4 4.9 3H19.4z",
+      formaDeLaBanda: "M1.6 8.2h24v1.8h-24z",
+    },
+    OTRO: {
+      nombre: "Otros de larga distancia", etiquetaCorta: "LD", color: "#6b7280", ancho: 30,
+      formaDelCuerpo: "M1 2Q1 1 3 1H23Q30 1 31 6V10Q31 11 30 11H3Q1 11 1 10Z",
+      formaDeLasVentanas: "M4 3h5v2.6H4zM11 3h5v2.6h-5z",
+      formaDeLaCabina: "M18.5 3h3.8c1.6.5 2.6 1.6 3.2 2.8H18.5z",
+      formaDeLaBanda: "M1.6 8.3h23v1.8h-23z",
+    },
+    MD: {
+      nombre: "Media distancia (MD)", etiquetaCorta: "MD", color: "#92400e", ancho: 28,
+      formaDelCuerpo: "M1 2Q1 1 2 1H24Q31 1 31 6V10Q31 11 30 11H2Q1 11 1 10Z",
+      formaDeLasVentanas: "M3.5 3h4.6v3H3.5zM9.6 3h4.6v3H9.6zM15.7 3h4.6v3h-4.6z",
+      formaDeLaCabina: "M22 3h2.4c1.8 0 3.2 1.4 3.2 3H22z",
+      formaDeLaBanda: "M1.6 8.3h23v1.8h-23z",
+    },
+    REGIONAL: {
+      nombre: "Regional (Reg., Reg. Exp., Proximidad)", etiquetaCorta: "REG", color: "#0891b2", ancho: 26,
+      formaDelCuerpo: "M1 2Q1 1 2 1H14.5V11H2Q1 11 1 10ZM16 1H28Q31 1 31 4V10Q31 11 30 11H16Z",
+      formaDeLasVentanas: "M3.5 3h3.4v3H3.5zM8.4 3h3.4v3H8.4zM17.5 3h3.4v3h-3.4z",
+      formaDeLaCabina: "M24.3 3h2.6q1.6 0 1.6 1.6V6h-4.2z",
+      formaDeLaBanda: "M1.6 8.3h12.4v1.8H1.6zM16.6 8.3h8v1.8h-8z",
+    },
+    CERCANIAS: {
+      nombre: "Cercan&iacute;as", etiquetaCorta: "", color: "#64748b", ancho: 23,
+      formaDelCuerpo: "M1 2Q1 1 2 1H29Q31 1 31 3V10Q31 11 30 11H2Q1 11 1 10Z",
+      formaDeLasVentanas: "M3.5 3h5.5v3H3.5zM10.5 3H16v3h-5.5zM17.5 3H23v3h-5.5z",
+      formaDeLaCabina: "M24.5 3h3.8q.7 0 .7.7V6h-4.5z",
+      formaDeLaBanda: "M1.6 8.3h26.4v1.8H1.6z",
+    },
+    RODALIES: {
+      nombre: "Rodalies", etiquetaCorta: "", color: "#4d7c0f", ancho: 23,
+      formaDelCuerpo: "M1 2Q1 1 2 1H23.5C27 1 29.5 3.5 31 7V10Q31 11 30 11H2Q1 11 1 10Z",
+      formaDeLasVentanas: "M3.5 3h4.8v3H3.5zM9.8 3h4.8v3H9.8zM16.1 3h4.2v3h-4.2z",
+      formaDeLaCabina: "M22 3h1.8c1.6.2 2.8 1.2 3.6 3H22z",
+      formaDeLaBanda: "M1.6 8.3h24v1.8h-24z",
+    },
+  };
+
+  const GRUPOS_DE_MARCAS = [
+    ["Alta velocidad", ["AVE", "AVLO", "AVANT", "IRYO"]],
+    ["Larga distancia", ["ALVIA", "INTERCITY", "EUROMED", "OTRO"]],
+    ["Media distancia", ["MD", "REGIONAL"]],
+    ["Cercan&iacute;as", ["CERCANIAS", "RODALIES"]],
+  ];
+
+  function esMarcaDeCercanias(marca) {
+    return marca === "CERCANIAS" || marca === "RODALIES";
+  }
+
+  function colorSegunElRetraso(retrasoEnSegundos) {
+    if (retrasoEnSegundos == null) return "#a8a29e";
+    if (retrasoEnSegundos >= 600) return "#dc2626";
+    if (retrasoEnSegundos >= 300) return "#f97316";
+    if (retrasoEnSegundos >= 60) return "#eab308";
+    return "#22c55e";
+  }
+
+  function obtenerMarcaDelTren(propiedadesDelTren) {
+    if (propiedadesDelTren.categoria === "Cercanias") {
+      return propiedadesDelTren.nucleo === "Barcelona (Rodalies)" ? "RODALIES" : "CERCANIAS";
+    }
+
+    const tipoDeServicio = (propiedadesDelTren.linea || "").toUpperCase();
+
+    if (tipoDeServicio.startsWith("AVE")) return "AVE";
+    if (tipoDeServicio.startsWith("AVANT")) return "AVANT";
+    if (["AVLO", "ALVIA", "INTERCITY", "EUROMED", "MD"].includes(tipoDeServicio)) return tipoDeServicio;
+    if (["REGIONAL", "REG.EXP.", "PROXIMDAD"].includes(tipoDeServicio)) return "REGIONAL";
+    return "OTRO";
+  }
+
+  function obtenerColorDeMarcaDelTren(marca, propiedadesDelTren) {
+    const claveDeLaLinea = propiedadesDelTren.nucleo + "|" + propiedadesDelTren.linea;
+    const colorDeLaLinea = esMarcaDeCercanias(marca) && colorDeLineaPorNucleoYLinea[claveDeLaLinea];
+    return colorDeLaLinea || MARCAS_DE_TREN[marca].color;
+  }
+
+
+  let modoDeColorDelIcono = leerDelAlmacenamiento("localStorage", "modoIcono") === "retraso" ? "retraso" : "marca";
+
+  function crearSvgDeTren(marca, opciones) {
+    const datosDeLaMarca = MARCAS_DE_TREN[marca];
+    const colorDeMarca = opciones.colorDeMarca || datosDeLaMarca.color;
+    const anchoEnPixeles = opciones.ancho || datosDeLaMarca.ancho;
+    const altoEnPixeles = anchoEnPixeles * 12 / 32;
+    const elColorDelCuerpoEsElDeLaMarca = modoDeColorDelIcono === "marca";
+    const colorDelRetraso = colorSegunElRetraso(opciones.retrasoEnSegundos);
+
+    const estela = opciones.enMovimiento
+      ? '<path d="M-1 3.5h-5M-1 6h-8M-1 8.5h-5" stroke="#292524" stroke-width="1.4" stroke-linecap="round" opacity=".85"/>'
+      : "";
+
+    const puntoDeRetraso = elColorDelCuerpoEsElDeLaMarca && opciones.mostrarPuntoDeRetraso !== false
+      ? `<circle cx="29.5" cy="1.8" r="3.4" fill="${colorDelRetraso}" stroke="#fff" stroke-width="1.1"/>`
+      : "";
+
+    const colorDelCuerpo = elColorDelCuerpoEsElDeLaMarca ? colorDeMarca : colorDelRetraso;
+    const colorDelBordeDelCuerpo = opciones.enMovimiento ? "#fff" : "#44403c";
+    const rayasDelBorde = opciones.enMovimiento ? "" : 'stroke-dasharray="2 1.5"';
+    const colorDeLaCabina = elColorDelCuerpoEsElDeLaMarca ? "#111827" : colorDeMarca;
+    const opacidadDeLaCabina = elColorDelCuerpoEsElDeLaMarca ? .8 : 1;
+    const colorDeLaBanda = elColorDelCuerpoEsElDeLaMarca ? "#000" : colorDeMarca;
+    const opacidadDeLaBanda = elColorDelCuerpoEsElDeLaMarca ? .28 : 1;
+    const opacidadDelTren = opciones.enMovimiento ? 1 : .45;
+
+    return `<svg class="icono-de-tren" viewBox="0 0 32 12" width="${anchoEnPixeles}" height="${altoEnPixeles}" opacity="${opacidadDelTren}">${estela}
+      <path d="${datosDeLaMarca.formaDelCuerpo}" fill="${colorDelCuerpo}" stroke="${colorDelBordeDelCuerpo}" stroke-width="1.2"
+        stroke-linejoin="round" ${rayasDelBorde}/>
+      <path d="${datosDeLaMarca.formaDeLasVentanas}" fill="#fff" fill-opacity=".9"/>
+      <path d="${datosDeLaMarca.formaDeLaCabina}" fill="${colorDeLaCabina}" fill-opacity="${opacidadDeLaCabina}"/>
+      <path d="${datosDeLaMarca.formaDeLaBanda}" fill="${colorDeLaBanda}" fill-opacity="${opacidadDeLaBanda}"/>
+      <circle cx="7" cy="11" r="1.3" fill="#1c1917"/><circle cx="24" cy="11" r="1.3" fill="#1c1917"/>${puntoDeRetraso}</svg>`;
+  }
+
+  function crearIconoDeTrenParaElMapa(marca, propiedadesDelTren, colorDeMarca) {
+    const datosDeLaMarca = MARCAS_DE_TREN[marca];
+    const ancho = datosDeLaMarca.ancho;
+    const alto = ancho * 12 / 32;
+    const etiqueta = datosDeLaMarca.etiquetaCorta || propiedadesDelTren.linea;
+
+    return L.divIcon({
+      className: "",
+      iconSize: [ancho, alto],
+      iconAnchor: [ancho / 2, alto / 2],
+      html: crearSvgDeTren(marca, {
+        retrasoEnSegundos: propiedadesDelTren.retraso,
+        enMovimiento: propiedadesDelTren.movimiento,
+        colorDeMarca: colorDeMarca,
+      }) + `<span class="etiqueta-del-tren">${etiqueta}</span>`,
+    });
+  }
+
+  function mostrarEtiquetasDeTrenesSoloSiElMapaEstaAcercado() {
+    const elMapaEstaAcercado = mapa.getZoom() >= ZOOM_MINIMO_PARA_MOSTRAR_ETIQUETAS_DE_TRENES;
+    obtenerElemento("mapa").classList.toggle("mostrar-etiquetas-de-trenes", elMapaEstaAcercado);
+  }
+
+  mapa.on("zoomend", mostrarEtiquetasDeTrenesSoloSiElMapaEstaAcercado);
+  mostrarEtiquetasDeTrenesSoloSiElMapaEstaAcercado();
+
+
+  const marcadoresDeTrenesDibujados = [];
+
+  const controlSelectorDeColor = L.control({ position: "topleft" });
+
+  controlSelectorDeColor.onAdd = () => {
+    const contenedor = L.DomUtil.create("div", "selector-de-color leaflet-bar");
+    L.DomEvent.disableClickPropagation(contenedor);
+
+    contenedor.innerHTML =
+      '<span>Color del tren</span>' +
+      '<button data-modo="marca">Marca</button>' +
+      '<button data-modo="retraso">Retraso</button>' +
+      '<label class="casilla-con-etiqueta" title="Viajes cancelados de larga distancia, en su estaci&oacute;n de origen">' +
+        '<input type="checkbox" id="casilla-de-cancelados" checked> Cancelados <span id="contador-de-cancelados"></span>' +
+      '</label>';
+
+    contenedor.onclick = evento => {
+      const botonPulsado = evento.target.closest("button");
+      if (botonPulsado) {
+        cambiarElModoDeColorDelIcono(botonPulsado.dataset.modo);
+      }
+    };
+
+    return contenedor;
+  };
+
+  controlSelectorDeColor.addTo(mapa);
+
+  function marcarElBotonDelModoDeColorActivo() {
+    document.querySelectorAll(".selector-de-color button").forEach(boton => {
+      boton.classList.toggle("activado", boton.dataset.modo === modoDeColorDelIcono);
+    });
+  }
+
+  function cambiarElModoDeColorDelIcono(nuevoModo) {
+    modoDeColorDelIcono = nuevoModo;
+    guardarEnElAlmacenamiento("localStorage", "modoIcono", modoDeColorDelIcono);
+
+    marcadoresDeTrenesDibujados.forEach(trenDibujado => {
+      trenDibujado.marcador.setIcon(
+        crearIconoDeTrenParaElMapa(trenDibujado.marca, trenDibujado.propiedades, trenDibujado.colorDeMarca)
+      );
+    });
+
+    marcarElBotonDelModoDeColorActivo();
+    dibujarLaLeyenda();
+  }
+
+  marcarElBotonDelModoDeColorActivo();
+
+
+  const capasDeTrenesEnMovimientoPorMarca = {};
+  const capaDeTrenesParados = L.layerGroup().addTo(mapa);
+  const capaDeViajesCancelados = L.layerGroup().addTo(mapa);
+  const capaDeIncidentes = L.layerGroup().addTo(mapa);
+
+  Object.keys(MARCAS_DE_TREN).forEach(marca => {
+    capasDeTrenesEnMovimientoPorMarca[marca] = L.layerGroup().addTo(mapa);
+  });
+
+  const casillaDeCancelados = obtenerElemento("casilla-de-cancelados");
+  const mostrarCanceladosGuardado = leerDelAlmacenamiento("localStorage", "verCancelados") !== "0";
+
+  if (!mostrarCanceladosGuardado) {
+    mapa.removeLayer(capaDeViajesCancelados);
+  }
+  casillaDeCancelados.checked = mostrarCanceladosGuardado;
+
+  casillaDeCancelados.addEventListener("change", () => {
+    if (casillaDeCancelados.checked) {
+      capaDeViajesCancelados.addTo(mapa);
+    } else {
+      mapa.removeLayer(capaDeViajesCancelados);
+    }
+  });
+
+  capaDeViajesCancelados.on("add remove", () => {
+    casillaDeCancelados.checked = mapa.hasLayer(capaDeViajesCancelados);
+    guardarEnElAlmacenamiento("localStorage", "verCancelados", casillaDeCancelados.checked ? "1" : "0");
+  });
+
+
+  const capasConContadorEnElControlDeCapas = [];
+  let incidentesEscritosAMano = [];
+  let instanteMostradoEnElMapa = new Date();
+  let esLaPrimeraVezQueSeDibujaElMapa = true;
+
+  function crearHtmlDeLaListaDeTrenesDeUnIncidente(trenesDelIncidente) {
+    return trenesDelIncidente.map(tren => {
+      const datosDeLaMarca = MARCAS_DE_TREN[tren.marca] || MARCAS_DE_TREN.OTRO;
+      const nombreDeLaMarca = (MARCAS_DE_TREN[tren.marca] || { nombre: tren.marca }).nombre;
+      const textoDeViajeros = tren.viajeros ? " &middot; " + tren.viajeros + " viajeros" : "";
+
+      return `<div><i class="cuadrito-de-color" style="background:${datosDeLaMarca.color}"></i>` +
+        `${escaparHtml(nombreDeLaMarca)} ${escaparHtml(tren.numero)} (${escaparHtml(tren.operador)}) &middot; ${escaparHtml(tren.trayecto)}` +
+        `${textoDeViajeros}</div>`;
+    }).join("");
+  }
+
+  function dibujarLosIncidentesQueYaHanOcurrido() {
+    capaDeIncidentes.clearLayers();
+
+    const incidentesYaOcurridos = incidentesEscritosAMano.filter(
+      incidente => new Date(incidente.properties.hora) <= instanteMostradoEnElMapa
+    );
+
+    incidentesYaOcurridos.forEach(incidente => {
+      const propiedades = incidente.properties;
+      const [longitud, latitud] = incidente.geometry.coordinates;
+
+      const listaDeTrenes = crearHtmlDeLaListaDeTrenesDeUnIncidente(propiedades.trenes);
+      const enlacesALasFuentes = propiedades.fuentes
+        .map(fuente => `<a href="${escaparHtml(fuente.url)}" target="_blank" rel="noopener">${escaparHtml(fuente.nombre)}</a>`)
+        .join(" &middot; ");
+      const horaDelIncidente = new Date(propiedades.hora).toLocaleString("es-ES", { dateStyle: "short", timeStyle: "short" });
+      const avisoDePosicionAproximada = propiedades.aproximada ? "La posici&oacute;n es aproximada. " : "";
+
+      const marcador = L.marker([latitud, longitud], {
+        zIndexOffset: 4000,
+        icon: L.divIcon({
+          className: "",
+          iconSize: [0, 0],
+          html: '<span class="marcador-de-incidente">&#9888;</span>',
+        }),
+      });
+
+      marcador.bindPopup(
+        `<b>${escaparHtml(propiedades.titulo)}</b><br>${horaDelIncidente}` +
+        `<div class="lista-de-trenes-en-popup">${listaDeTrenes}</div>` +
+        `<p class="texto-del-incidente">${escaparHtml(propiedades.detalle)}</p>` +
+        `<p class="texto-del-incidente"><i>Dato escrito a mano a partir de la prensa; no viene del feed de Renfe. ` +
+        `${avisoDePosicionAproximada}Balance de v&iacute;ctimas y causa: ver las fuentes (provisionales).</i></p>` +
+        `<p class="texto-del-incidente">${enlacesALasFuentes}</p>`,
+        { maxWidth: 320, maxHeight: 300 }
+      );
+
+      capaDeIncidentes.addLayer(marcador);
+    });
+  }
+
+  function agruparCanceladosPorEstacionDeOrigen(canceladosGeojson) {
+    const gruposPorOrigen = {};
+
+    canceladosGeojson.features.forEach(viajeCancelado => {
+      const origen = viajeCancelado.properties.origen;
+      if (!gruposPorOrigen[origen]) {
+        gruposPorOrigen[origen] = { coordenadas: viajeCancelado.geometry.coordinates, viajes: [] };
+      }
+      gruposPorOrigen[origen].viajes.push(viajeCancelado.properties);
+    });
+
+    return gruposPorOrigen;
+  }
+
+  function dibujarLosViajesCanceladosAgrupadosPorEstacionDeOrigen(canceladosGeojson) {
+    capaDeViajesCancelados.clearLayers();
+
+    const gruposPorOrigen = agruparCanceladosPorEstacionDeOrigen(canceladosGeojson);
+
+    Object.entries(gruposPorOrigen).forEach(([origen, grupo]) => {
+      const viajesOrdenadosPorTren = grupo.viajes.sort((viajeA, viajeB) => viajeA.tren.localeCompare(viajeB.tren));
+
+      const filasDeLaLista = viajesOrdenadosPorTren.map(viaje => {
+        const marca = obtenerMarcaDelTren(viaje);
+        return `<div><i class="cuadrito-de-color" style="background:${MARCAS_DE_TREN[marca].color}"></i>` +
+          `${MARCAS_DE_TREN[marca].nombre} ${escaparHtml(viaje.tren)} &rarr; ${escaparHtml(viaje.destino || "?")}</div>`;
+      });
+
+      const cuantosViajes = grupo.viajes.length;
+      const palabraViajes = cuantosViajes > 1 ? "viajes" : "viaje";
+      const palabraCancelados = cuantosViajes > 1 ? "cancelados" : "cancelado";
+      const filasSobrantes = filasDeLaLista.length - MAXIMO_DE_TRENES_CANCELADOS_EN_UN_POPUP;
+      const avisoDeFilasSobrantes = filasSobrantes > 0 ? `<div>&hellip; y ${filasSobrantes} m&aacute;s</div>` : "";
+
+      const [longitud, latitud] = grupo.coordenadas;
+      const marcador = L.marker([latitud, longitud], {
+        zIndexOffset: 3000,
+        icon: L.divIcon({
+          className: "",
+          iconSize: [0, 0],
+          html: `<span class="marcador-de-cancelados">&#10005; ${cuantosViajes}</span>`,
+        }),
+      });
+
+      marcador.bindPopup(
+        `<b>${escaparHtml(origen)}</b><br>${cuantosViajes} ${palabraViajes} ${palabraCancelados} desde aqu&iacute;` +
+        `<div class="lista-de-trenes-en-popup">${filasDeLaLista.slice(0, MAXIMO_DE_TRENES_CANCELADOS_EN_UN_POPUP).join("")}${avisoDeFilasSobrantes}</div>`,
+        { maxHeight: 280 }
+      );
+
+      capaDeViajesCancelados.addLayer(marcador);
+    });
+  }
+
+  function actualizarLasCifrasDeArriba(resumen) {
+    const nombresDeLasCifras = ["trenes_ahora", "en_movimiento", "parados", "retraso_medio_s", "con_retraso", "cancelados"];
+
+    nombresDeLasCifras.forEach(nombreDeLaCifra => {
+      const elementoDeLaCifra = obtenerElemento("cifra-" + nombreDeLaCifra);
+      if (!elementoDeLaCifra) {
+        return;
+      }
+
+      elementoDeLaCifra.textContent = nombreDeLaCifra === "retraso_medio_s"
+        ? `${resumen[nombreDeLaCifra]} s`
+        : resumen[nombreDeLaCifra];
+    });
+  }
+
+  function crearTituloDelPopupDeUnTren(marca, propiedadesDelTren) {
+    const nombreDeLaMarca = MARCAS_DE_TREN[marca].nombre;
+
+    if (esMarcaDeCercanias(marca)) {
+      const nucleoSoloEnCercanias = marca === "CERCANIAS" ? " &middot; " + escaparHtml(propiedadesDelTren.nucleo) : "";
+      return `${nombreDeLaMarca} ${escaparHtml(propiedadesDelTren.linea)}${nucleoSoloEnCercanias}`;
+    }
+
+    const lineaEsIgualAlNombreDeLaMarca = propiedadesDelTren.linea.toUpperCase() === nombreDeLaMarca.toUpperCase();
+    return lineaEsIgualAlNombreDeLaMarca ? nombreDeLaMarca : `${nombreDeLaMarca} (${escaparHtml(propiedadesDelTren.linea)})`;
+  }
+
+  function crearPopupDeUnTren(marca, propiedadesDelTren, colorDeMarca) {
+    const textoDeMovimiento = propiedadesDelTren.movimiento ? "&#9654; En movimiento" : "&#9724; Parado";
+    const textoDeRetraso = propiedadesDelTren.retraso == null
+      ? "sin dato"
+      : (propiedadesDelTren.retraso / 60).toFixed(1) + " min";
+    const textoDeVelocidad = propiedadesDelTren.movimiento && propiedadesDelTren.vel != null
+      ? `Velocidad (est.): ${Math.round(propiedadesDelTren.vel)} km/h<br>`
+      : "";
+
+    return `<b><i class="cuadrito-de-color" style="background:${colorDeMarca}"></i>${crearTituloDelPopupDeUnTren(marca, propiedadesDelTren)}</b>` +
+      ` &middot; tren ${escaparHtml(propiedadesDelTren.tren)}<br>` +
+      `${textoDeMovimiento}<br>` +
+      `Siguiente parada: ${escaparHtml(propiedadesDelTren.parada) || "-"}<br>` +
+      `Retraso: ${textoDeRetraso}<br>` +
+      textoDeVelocidad +
+      `${new Date(propiedadesDelTren.hora).toLocaleTimeString("es-ES")}`;
+  }
+
+  function dibujarLosTrenesDelInstante(trenesGeojson) {
+    const cantidadDeTrenesPorCapa = { parados: 0 };
+    Object.keys(MARCAS_DE_TREN).forEach(marca => {
+      cantidadDeTrenesPorCapa[marca] = 0;
+    });
+
+    marcadoresDeTrenesDibujados.length = 0;
+    Object.values(capasDeTrenesEnMovimientoPorMarca).forEach(capa => capa.clearLayers());
+    capaDeTrenesParados.clearLayers();
+
+    trenesGeojson.features.forEach(tren => {
+      const propiedades = tren.properties;
+      const marca = obtenerMarcaDelTren(propiedades);
+      const colorDeMarca = obtenerColorDeMarcaDelTren(marca, propiedades);
+      const [longitud, latitud] = tren.geometry.coordinates;
+
+      const marcador = L.marker([latitud, longitud], {
+        icon: crearIconoDeTrenParaElMapa(marca, propiedades, colorDeMarca),
+        zIndexOffset: propiedades.movimiento ? 1000 : 0,
+      });
+      marcador.bindPopup(crearPopupDeUnTren(marca, propiedades, colorDeMarca));
+
+      marcadoresDeTrenesDibujados.push({ marcador, marca, propiedades, colorDeMarca });
+
+      if (propiedades.movimiento) {
+        capasDeTrenesEnMovimientoPorMarca[marca].addLayer(marcador);
+        cantidadDeTrenesPorCapa[marca]++;
+      } else {
+        capaDeTrenesParados.addLayer(marcador);
+        cantidadDeTrenesPorCapa.parados++;
+      }
+    });
+
+    return cantidadDeTrenesPorCapa;
+  }
+
+  function ajustarElMapaParaVerTodosLosTrenesSiNoHayVistaGuardada(trenesGeojson) {
+    if (vistaGuardadaDelMapa || !trenesGeojson.features.length) {
+      return;
+    }
+
+    const posiciones = trenesGeojson.features.map(tren => [tren.geometry.coordinates[1], tren.geometry.coordinates[0]]);
+    mapa.fitBounds(L.latLngBounds(posiciones), { maxZoom: 6, padding: [20, 20] });
+  }
+
+  function actualizarElControlDeCapasConLosContadoresDelInstante(cantidadDeTrenesPorCapa, cuantosCancelados) {
+    capasConContadorEnElControlDeCapas.forEach(capa => controlDeCapas.removeLayer(capa));
+    capasConContadorEnElControlDeCapas.length = 0;
+
+    const anadirCapaConContador = (capa, nombre) => {
+      controlDeCapas.addOverlay(capa, nombre);
+      capasConContadorEnElControlDeCapas.push(capa);
+    };
+
+    GRUPOS_DE_MARCAS.forEach(([, marcasDelGrupo]) => {
+      marcasDelGrupo
+        .filter(marca => cantidadDeTrenesPorCapa[marca])
+        .forEach(marca => {
+          anadirCapaConContador(
+            capasDeTrenesEnMovimientoPorMarca[marca],
+            `En movimiento &middot; ${MARCAS_DE_TREN[marca].nombre} (${cantidadDeTrenesPorCapa[marca]})`
+          );
+        });
+    });
+
+    anadirCapaConContador(capaDeTrenesParados, `Parados (${cantidadDeTrenesPorCapa.parados})`);
+    anadirCapaConContador(
+      capaDeViajesCancelados,
+      `Cancelados en su origen (${cuantosCancelados}) &middot; solo larga distancia`
+    );
+    anadirCapaConContador(capaDeIncidentes, `Incidentes (${capaDeIncidentes.getLayers().length})`);
+  }
+
+  function dibujarTodoLoQueDependeDelInstante(estadoDelMapa) {
+    instanteMostradoEnElMapa = new Date(estadoDelMapa.t);
+
+    const cantidadDeTrenesPorCapa = dibujarLosTrenesDelInstante(estadoDelMapa.trenes);
+    dibujarLosViajesCanceladosAgrupadosPorEstacionDeOrigen(estadoDelMapa.cancelados);
+    obtenerElemento("contador-de-cancelados").textContent = `(${estadoDelMapa.cancelados.features.length})`;
+    dibujarLosIncidentesQueYaHanOcurrido();
+    actualizarLasCifrasDeArriba(estadoDelMapa.resumen);
+
+    if (esLaPrimeraVezQueSeDibujaElMapa) {
+      esLaPrimeraVezQueSeDibujaElMapa = false;
+      ajustarElMapaParaVerTodosLosTrenesSiNoHayVistaGuardada(estadoDelMapa.trenes);
+      controlDeCapas.addOverlay(capaDeViasDeAltaVelocidad, "V&iacute;as alta velocidad");
+      controlDeCapas.addOverlay(capaDeViasConvencionales, "V&iacute;as red principal");
+      controlDeCapas.addOverlay(capaDeLineasDeCercanias, "L&iacute;neas Cercan&iacute;as");
+    }
+
+    actualizarElControlDeCapasConLosContadoresDelInstante(cantidadDeTrenesPorCapa, estadoDelMapa.cancelados.features.length);
+  }
+
+
+  const lineaDeTiempo = {
+    primerInstanteConDatosEnMs: 0,
+    ultimoInstanteEnMs: 0,
+    cubosDeCobertura: [],
+    duracionDeUnCuboEnMs: 600000,
+    estaEnDirecto: true,
+    temporizadorDeReproduccion: null,
+    hayUnaPeticionEnCurso: false,
+    instanteEnEsperaEnMs: null,
+    elUsuarioHaTocadoLaLineaDeTiempo: false,
+  };
+
+  const deslizadorDelTiempo = obtenerElemento("deslizador-del-tiempo");
+  const textoDelInstante = obtenerElemento("texto-del-instante");
+  const textoDeCuandoDelMapa = obtenerElemento("texto-de-cuando-del-mapa");
+  const notaDelPasado = obtenerElemento("nota-del-pasado");
+  const botonReproducir = obtenerElemento("boton-reproducir");
+  const botonAhora = obtenerElemento("boton-ahora");
+  const selectorDeVentana = obtenerElemento("selector-de-ventana");
+  const selectorDeVelocidad = obtenerElemento("selector-de-velocidad");
+  const histogramaDeCobertura = obtenerElemento("histograma-de-cobertura");
+
+  function formatearFechaYHoraCorta(milisegundos) {
+    return new Date(milisegundos).toLocaleString("es-ES", {
+      weekday: "short", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit",
+    });
+  }
+
+  function actualizarLosTextosDeLaLineaDeTiempo(cuantosTrenesHayEnElInstante) {
+    const instanteSeleccionadoEnMs = Number(deslizadorDelTiempo.value);
+    const noHayDatosEnEseInstante = cuantosTrenesHayEnElInstante === 0;
+
+    textoDeCuandoDelMapa.textContent = lineaDeTiempo.estaEnDirecto
+      ? "posición actual"
+      : `posición el ${formatearFechaYHoraCorta(instanteSeleccionadoEnMs)}`;
+
+    textoDelInstante.textContent = lineaDeTiempo.estaEnDirecto
+      ? "Ahora (en directo)"
+      : formatearFechaYHoraCorta(instanteSeleccionadoEnMs) + (noHayDatosEnEseInstante ? " · sin datos" : "");
+
+    notaDelPasado.hidden = lineaDeTiempo.estaEnDirecto;
+    botonAhora.classList.toggle("activado", lineaDeTiempo.estaEnDirecto);
+  }
+
+  function dibujarElHistogramaDeCobertura() {
+    const minimoEnMs = Number(deslizadorDelTiempo.min);
+    const maximoEnMs = Number(deslizadorDelTiempo.max);
+    const duracionTotalEnMs = Math.max(1, maximoEnMs - minimoEnMs);
+    const anchoDelDibujo = 1000;
+    const altoDelDibujo = 24;
+
+    const cubosVisibles = lineaDeTiempo.cubosDeCobertura.filter(
+      cubo => cubo.t + lineaDeTiempo.duracionDeUnCuboEnMs > minimoEnMs && cubo.t < maximoEnMs
+    );
+    const posicionesDelCuboMasLleno = Math.max(1, ...cubosVisibles.map(cubo => cubo.n));
+
+    histogramaDeCobertura.innerHTML = cubosVisibles.map(cubo => {
+      const x = Math.max(0, (cubo.t - minimoEnMs) / duracionTotalEnMs * anchoDelDibujo);
+      const ancho = Math.max(2, lineaDeTiempo.duracionDeUnCuboEnMs / duracionTotalEnMs * anchoDelDibujo);
+      const alto = Math.max(3, cubo.n / posicionesDelCuboMasLleno * altoDelDibujo);
+
+      return `<rect x="${x}" y="${altoDelDibujo - alto}" width="${ancho}" height="${alto}" fill="currentColor"/>`;
+    }).join("");
+  }
+
+  function ajustarElRangoDelDeslizadorSegunLaVentanaElegida() {
+    const horasDeLaVentana = Number(selectorDeVentana.value);
+    const todoElHistorico = horasDeLaVentana === 0;
+
+    deslizadorDelTiempo.min = todoElHistorico
+      ? lineaDeTiempo.primerInstanteConDatosEnMs
+      : Math.max(lineaDeTiempo.primerInstanteConDatosEnMs, lineaDeTiempo.ultimoInstanteEnMs - horasDeLaVentana * 3600e3);
+    deslizadorDelTiempo.max = lineaDeTiempo.ultimoInstanteEnMs;
+
+    deslizadorDelTiempo.value = lineaDeTiempo.estaEnDirecto
+      ? lineaDeTiempo.ultimoInstanteEnMs
+      : Math.min(
+          Math.max(Number(deslizadorDelTiempo.value), Number(deslizadorDelTiempo.min)),
+          lineaDeTiempo.ultimoInstanteEnMs
+        );
+
+    dibujarElHistogramaDeCobertura();
+    actualizarLosTextosDeLaLineaDeTiempo();
+  }
+
+  async function pedirAlServidorElEstadoDelMapaEnUnInstante(instanteEnMs) {
+    if (lineaDeTiempo.hayUnaPeticionEnCurso) {
+      lineaDeTiempo.instanteEnEsperaEnMs = instanteEnMs;
+      return;
+    }
+
+    lineaDeTiempo.hayUnaPeticionEnCurso = true;
+    try {
+      const instanteIso = encodeURIComponent(new Date(instanteEnMs).toISOString());
+      const respuesta = await fetch(`{{ url_for('devolver_estado_del_mapa_en_el_instante') }}?t=${instanteIso}`);
+      const estadoDelMapa = await respuesta.json();
+
+      dibujarTodoLoQueDependeDelInstante(estadoDelMapa);
+      actualizarLosTextosDeLaLineaDeTiempo(estadoDelMapa.trenes.features.length);
+    } catch (error) {
+    }
+    lineaDeTiempo.hayUnaPeticionEnCurso = false;
+
+    if (lineaDeTiempo.instanteEnEsperaEnMs != null) {
+      const instanteEnEspera = lineaDeTiempo.instanteEnEsperaEnMs;
+      lineaDeTiempo.instanteEnEsperaEnMs = null;
+      pedirAlServidorElEstadoDelMapaEnUnInstante(instanteEnEspera);
+    }
+  }
+
+  function alCambiarElInstanteSeleccionado() {
+    lineaDeTiempo.estaEnDirecto = Number(deslizadorDelTiempo.value) >= lineaDeTiempo.ultimoInstanteEnMs;
+
+    if (lineaDeTiempo.estaEnDirecto) {
+      if (lineaDeTiempo.elUsuarioHaTocadoLaLineaDeTiempo) {
+        location.reload();
+        return;
+      }
+    } else {
+      lineaDeTiempo.elUsuarioHaTocadoLaLineaDeTiempo = true;
+      desactivarLaRecargaMientrasSeVeElPasado();
+    }
+
+    actualizarLosTextosDeLaLineaDeTiempo();
+    pedirAlServidorElEstadoDelMapaEnUnInstante(Number(deslizadorDelTiempo.value));
+  }
+
+  function pausarLaReproduccion() {
+    clearInterval(lineaDeTiempo.temporizadorDeReproduccion);
+    lineaDeTiempo.temporizadorDeReproduccion = null;
+    botonReproducir.innerHTML = "&#9654;";
+  }
+
+  function alternarLaReproduccion() {
+    if (lineaDeTiempo.temporizadorDeReproduccion) {
+      return pausarLaReproduccion();
+    }
+
+    desactivarLaRecargaMientrasSeVeElPasado();
+    lineaDeTiempo.estaEnDirecto = false;
+    lineaDeTiempo.elUsuarioHaTocadoLaLineaDeTiempo = true;
+
+    if (Number(deslizadorDelTiempo.value) >= lineaDeTiempo.ultimoInstanteEnMs) {
+      deslizadorDelTiempo.value = deslizadorDelTiempo.min;
+    }
+    botonReproducir.innerHTML = "&#10074;&#10074;";
+
+    lineaDeTiempo.temporizadorDeReproduccion = setInterval(() => {
+      const siguienteInstanteEnMs = Number(deslizadorDelTiempo.value) + Number(selectorDeVelocidad.value) * 1000;
+
+      if (siguienteInstanteEnMs >= lineaDeTiempo.ultimoInstanteEnMs) {
+        deslizadorDelTiempo.value = lineaDeTiempo.ultimoInstanteEnMs;
+        pausarLaReproduccion();
+      } else {
+        deslizadorDelTiempo.value = siguienteInstanteEnMs;
+      }
+
+      alCambiarElInstanteSeleccionado();
+    }, 1000);
+  }
+
+  function saltarEnLaLineaDeTiempo(milisegundos) {
+    const instanteDestinoEnMs = Number(deslizadorDelTiempo.value) + milisegundos;
+    deslizadorDelTiempo.value = Math.min(
+      Math.max(instanteDestinoEnMs, Number(deslizadorDelTiempo.min)),
+      Number(deslizadorDelTiempo.max)
+    );
+    alCambiarElInstanteSeleccionado();
+  }
+
+  deslizadorDelTiempo.addEventListener("input", () => {
+    if (lineaDeTiempo.temporizadorDeReproduccion) {
+      pausarLaReproduccion();
+    }
+    alCambiarElInstanteSeleccionado();
+  });
+  botonReproducir.addEventListener("click", alternarLaReproduccion);
+  obtenerElemento("boton-diez-minutos-antes").addEventListener("click", () => saltarEnLaLineaDeTiempo(-MILISEGUNDOS_DE_UN_SALTO_DE_DIEZ_MINUTOS));
+  obtenerElemento("boton-diez-minutos-despues").addEventListener("click", () => saltarEnLaLineaDeTiempo(MILISEGUNDOS_DE_UN_SALTO_DE_DIEZ_MINUTOS));
+  botonAhora.addEventListener("click", () => {
+    if (lineaDeTiempo.elUsuarioHaTocadoLaLineaDeTiempo) {
+      location.reload();
+    }
+  });
+  selectorDeVentana.addEventListener("change", ajustarElRangoDelDeslizadorSegunLaVentanaElegida);
+
+
+  lineasDeCercaniasCargadas
+    .then(() => Promise.all([
+      fetch("{{ url_for('devolver_incidentes_en_geojson') }}").then(respuesta => respuesta.json()),
+      fetch("{{ url_for('devolver_estado_del_mapa_en_el_instante') }}").then(respuesta => respuesta.json()),
+      fetch("{{ url_for('devolver_cobertura_del_historico') }}").then(respuesta => respuesta.json()),
+    ]))
+    .then(([incidentesGeojson, estadoDelMapaAhora, coberturaDelHistorico]) => {
+      incidentesEscritosAMano = incidentesGeojson.features;
+
+      lineaDeTiempo.primerInstanteConDatosEnMs = coberturaDelHistorico.desde;
+      lineaDeTiempo.ultimoInstanteEnMs = coberturaDelHistorico.hasta;
+      lineaDeTiempo.cubosDeCobertura = coberturaDelHistorico.cubos;
+      lineaDeTiempo.duracionDeUnCuboEnMs = coberturaDelHistorico.cubo_ms;
+
+      dibujarTodoLoQueDependeDelInstante(estadoDelMapaAhora);
+      ajustarElRangoDelDeslizadorSegunLaVentanaElegida();
+    });
+
+
+  const controlDeLeyenda = L.control({ position: "bottomright" });
+  let cajaDeLaLeyenda = null;
+
+  function obtenerTextoExtraDeLaMarcaEnLaLeyenda(marca) {
+    if (esMarcaDeCercanias(marca)) return " (color de la l&iacute;nea)";
+    if (marca === "IRYO") return " (solo en incidentes: no publica datos)";
+    return "";
+  }
+
+  function crearFilasDeLeyenda(iconosYTextos) {
+    return iconosYTextos
+      .map(([icono, texto]) => `<div class="fila-de-leyenda">${icono}<span>${texto}</span></div>`)
+      .join("");
+  }
+
+  function crearGruposDeMarcasDeLaLeyenda(opcionesDelIcono) {
+    return GRUPOS_DE_MARCAS.map(([nombreDelGrupo, marcasDelGrupo]) => {
+      const iconosYTextos = marcasDelGrupo.map(marca => [
+        crearSvgDeTren(marca, { ...opcionesDelIcono, ancho: Math.round(MARCAS_DE_TREN[marca].ancho * .85) }),
+        MARCAS_DE_TREN[marca].nombre + obtenerTextoExtraDeLaMarcaEnLaLeyenda(marca),
+      ]);
+      return `<h4>${nombreDelGrupo}</h4>` + crearFilasDeLeyenda(iconosYTextos);
+    }).join("");
+  }
+
+  function laLeyendaDebeEstarAbierta() {
+    const valorGuardado = leerDelAlmacenamiento("localStorage", "leyendaAbierta");
+    return valorGuardado === null
+      ? window.innerWidth >= ANCHO_MINIMO_DE_PANTALLA_PARA_LEYENDA_ABIERTA
+      : valorGuardado === "1";
+  }
+
+  function dibujarLaLeyenda() {
+    if (!cajaDeLaLeyenda) {
+      return;
+    }
+
+    const coloresDelRetraso = [
+      ["&lt; 1 min", "#22c55e"],
+      ["1 - 5 min", "#eab308"],
+      ["5 - 10 min", "#f97316"],
+      ["&ge; 10 min", "#dc2626"],
+      ["sin dato", "#a8a29e"],
+    ].map(([texto, color]) => [`<i style="background:${color}"></i>`, texto]);
+
+    const seccionDeMarcas = modoDeColorDelIcono === "marca"
+      ? crearGruposDeMarcasDeLaLeyenda({ enMovimiento: true, mostrarPuntoDeRetraso: false }) + "<h4>Retraso (punto del icono)</h4>"
+      : crearGruposDeMarcasDeLaLeyenda({ enMovimiento: true, retrasoEnSegundos: 0 }) + "<h4>Retraso (color del cuerpo)</h4>";
+
+    const seccionDeMovimiento = "<h4>Movimiento</h4>" + crearFilasDeLeyenda([
+      [crearSvgDeTren("MD", { enMovimiento: true, mostrarPuntoDeRetraso: false, ancho: 26 }), "En movimiento (con estela)"],
+      [crearSvgDeTren("MD", { enMovimiento: false, mostrarPuntoDeRetraso: false, ancho: 26 }), "Parado (transl&uacute;cido)"],
+      ['<span class="marcador-de-cancelados en-la-leyenda">&#10005; 3</span>', "Estaci&oacute;n con viajes cancelados (LD)"],
+      ['<span class="marcador-de-incidente en-la-leyenda">&#9888;</span>', "Incidente escrito a mano (posici&oacute;n aproximada)"],
+    ]);
+
+    cajaDeLaLeyenda.innerHTML =
+      `<details ${laLeyendaDebeEstarAbierta() ? "open" : ""}><summary>Leyenda</summary>` +
+      seccionDeMarcas +
+      crearFilasDeLeyenda(coloresDelRetraso) +
+      seccionDeMovimiento +
+      "</details>";
+
+    cajaDeLaLeyenda.querySelector("details").addEventListener("toggle", evento => {
+      guardarEnElAlmacenamiento("localStorage", "leyendaAbierta", evento.target.open ? "1" : "0");
+    });
+  }
+
+  controlDeLeyenda.onAdd = () => {
+    cajaDeLaLeyenda = L.DomUtil.create("div", "leyenda-del-mapa");
+    L.DomEvent.disableScrollPropagation(cajaDeLaLeyenda);
+    dibujarLaLeyenda();
+    return cajaDeLaLeyenda;
+  };
+
+  controlDeLeyenda.addTo(mapa);
+</script>
+</body>
+</html>

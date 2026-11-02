@@ -1,0 +1,1254 @@
+{
+  "title": "Trenes Renfe",
+  "uid": "trenes-renfe",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": {
+    "from": "now-3h",
+    "to": "now"
+  },
+  "tags": [
+    "renfe",
+    "practica3"
+  ],
+  "timezone": "browser",
+  "editable": true,
+  "panels": [
+    {
+      "id": 1,
+      "type": "row",
+      "title": "InfluxDB - datos en bruto (tiempo real)",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Trenes circulando",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influxdb-renfe"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-renfe"
+          },
+          "rawQuery": true,
+          "query": "SELECT \"value\" FROM \"trenes_stats\" WHERE \"topic\" = 'renfe/stats/trenes_activos' AND $timeFilter",
+          "resultFormat": "time_series"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Retraso medio",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influxdb-renfe"
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-renfe"
+          },
+          "rawQuery": true,
+          "query": "SELECT \"value\" FROM \"trenes_stats\" WHERE \"topic\" = 'renfe/stats/retraso_medio_s' AND $timeFilter",
+          "resultFormat": "time_series"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "unit": "s",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 60
+              },
+              {
+                "color": "orange",
+                "value": 300
+              },
+              {
+                "color": "red",
+                "value": 600
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Trenes con 5 min o mas de retraso",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influxdb-renfe"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-renfe"
+          },
+          "rawQuery": true,
+          "query": "SELECT \"value\" FROM \"trenes_stats\" WHERE \"topic\" = 'renfe/stats/con_retraso' AND $timeFilter",
+          "resultFormat": "time_series"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Velocidad maxima estimada (5 min)",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influxdb-renfe"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-renfe"
+          },
+          "rawQuery": true,
+          "query": "SELECT max(\"vel\") FROM \"trenes\" WHERE time > now() - 5m",
+          "resultFormat": "time_series"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "unit": "velocitykmh",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Trenes activos por nucleo",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influxdb-renfe"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-renfe"
+          },
+          "rawQuery": true,
+          "query": "SELECT mean(\"trenes\") FROM \"trenes_nucleo\" WHERE $timeFilter GROUP BY time($__interval), \"nucleo\" fill(none)",
+          "resultFormat": "time_series",
+          "alias": "$tag_nucleo"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 5
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Retraso medio por nucleo",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influxdb-renfe"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 5,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-renfe"
+          },
+          "rawQuery": true,
+          "query": "SELECT mean(\"retraso_medio\") FROM \"trenes_nucleo\" WHERE $timeFilter GROUP BY time($__interval), \"nucleo\" fill(none)",
+          "resultFormat": "time_series",
+          "alias": "$tag_nucleo"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 5
+          },
+          "decimals": 0,
+          "unit": "s"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 8,
+      "type": "geomap",
+      "title": "Mapa de trenes (InfluxDB, ultima posicion)",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influxdb-renfe"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 13,
+        "w": 24,
+        "h": 15
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-renfe"
+          },
+          "rawQuery": true,
+          "query": "SELECT last(\"lat\") AS \"lat\", last(\"lon\") AS \"lon\", last(\"retraso\") AS \"retraso\", last(\"parada\") AS \"parada\" FROM \"trenes\" WHERE time > now() - 5m GROUP BY \"tren\", \"linea\", \"nucleo\"",
+          "resultFormat": "table"
+        }
+      ],
+      "options": {
+        "view": {
+          "id": "coords",
+          "lat": 40.2,
+          "lon": -3.7,
+          "zoom": 6
+        },
+        "basemap": {
+          "type": "default",
+          "name": "Basemap"
+        },
+        "controls": {
+          "showZoom": true,
+          "mouseWheelZoom": true,
+          "showAttribution": true
+        },
+        "tooltip": {
+          "mode": "details"
+        },
+        "layers": [
+          {
+            "type": "markers",
+            "name": "Trenes",
+            "tooltip": true,
+            "location": {
+              "mode": "coords",
+              "latitude": "lat",
+              "longitude": "lon"
+            },
+            "config": {
+              "showLegend": true,
+              "style": {
+                "size": {
+                  "fixed": 7,
+                  "min": 7,
+                  "max": 7
+                },
+                "color": {
+                  "field": "retraso",
+                  "fixed": "dark-green"
+                },
+                "opacity": 0.85
+              }
+            }
+          }
+        ]
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 60
+              },
+              {
+                "color": "orange",
+                "value": 300
+              },
+              {
+                "color": "red",
+                "value": 600
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 9,
+      "type": "row",
+      "title": "PostgreSQL - datos agregados y relacionados (Flask)",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 28,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 10,
+      "type": "stat",
+      "title": "Trenes con senal (Postgres)",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "postgres-practica3"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 29,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "postgres-practica3"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "SELECT count(*) AS trenes FROM v_trenes_ahora",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 11,
+      "type": "stat",
+      "title": "En movimiento",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "postgres-practica3"
+      },
+      "gridPos": {
+        "x": 4,
+        "y": 29,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "postgres-practica3"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "SELECT count(*) AS trenes FROM v_trenes_ahora WHERE en_movimiento",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 12,
+      "type": "stat",
+      "title": "Parados",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "postgres-practica3"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 29,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "postgres-practica3"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "SELECT count(*) AS trenes FROM v_trenes_ahora WHERE NOT en_movimiento",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 13,
+      "type": "stat",
+      "title": "Retraso medio ahora",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "postgres-practica3"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 29,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "postgres-practica3"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "SELECT coalesce(round(avg(retraso_s)::numeric, 0), 0) AS retraso FROM v_trenes_ahora",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "unit": "s",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 60
+              },
+              {
+                "color": "orange",
+                "value": 300
+              },
+              {
+                "color": "red",
+                "value": 600
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 14,
+      "type": "stat",
+      "title": "Lineas registradas",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "postgres-practica3"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 29,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "postgres-practica3"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "SELECT count(*) AS lineas FROM lineas",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 15,
+      "type": "stat",
+      "title": "Posiciones guardadas",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "postgres-practica3"
+      },
+      "gridPos": {
+        "x": 20,
+        "y": 29,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "postgres-practica3"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "SELECT count(*) AS posiciones FROM posiciones",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 16,
+      "type": "timeseries",
+      "title": "Retraso medio por hora (retrasos_hora)",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "postgres-practica3"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 33,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "postgres-practica3"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "SELECT hora AS time, sum(retraso_medio * lecturas) / sum(lecturas) AS \"Retraso medio\" FROM retrasos_hora WHERE $__timeFilter(hora) GROUP BY 1 ORDER BY 1",
+          "format": "time_series"
+        }
+      ],
+      "options": {
+        "legend": {
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 70,
+            "lineWidth": 1
+          },
+          "unit": "s",
+          "decimals": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "purple"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 17,
+      "type": "timeseries",
+      "title": "Retraso medio por nucleo y hora",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "postgres-practica3"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 33,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "postgres-practica3"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "SELECT h.hora AS time, n.nombre AS metric, sum(h.retraso_medio * h.lecturas) / sum(h.lecturas) AS value FROM retrasos_hora h JOIN lineas l ON l.id = h.linea_id JOIN nucleos n ON n.id = l.nucleo_id WHERE $__timeFilter(h.hora) GROUP BY 1, 2 ORDER BY 1",
+          "format": "time_series"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 5,
+            "showPoints": "always"
+          },
+          "unit": "s",
+          "decimals": 0
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 18,
+      "type": "bargauge",
+      "title": "Top 10 lineas con mas retraso (v_lineas)",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "postgres-practica3"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 41,
+        "w": 8,
+        "h": 10
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "postgres-practica3"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "SELECT linea || ' ' || nucleo AS linea, retraso_medio_s FROM v_lineas WHERE retraso_medio_s IS NOT NULL ORDER BY retraso_medio_s DESC LIMIT 10",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true,
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^retraso_medio_s$/",
+          "values": true
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 0,
+          "min": 0,
+          "color": {
+            "mode": "continuous-GrYlRd"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 19,
+      "type": "piechart",
+      "title": "Trenes por nucleo (v_nucleos)",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "postgres-practica3"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 41,
+        "w": 8,
+        "h": 10
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "postgres-practica3"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "SELECT nucleo, trenes FROM v_nucleos ORDER BY trenes DESC",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "pieType": "donut",
+        "displayLabels": [
+          "name"
+        ],
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "values": [
+            "value",
+            "percent"
+          ]
+        },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": true
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 20,
+      "type": "table",
+      "title": "Puntualidad por nucleo, ultima hora (v_nucleos)",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "postgres-practica3"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 41,
+        "w": 8,
+        "h": 10
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "postgres-practica3"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "SELECT nucleo AS \"Nucleo\", trenes AS \"Trenes\", retraso_medio_s AS \"Retraso medio (s)\", pct_puntual AS \"% puntual\" FROM v_nucleos ORDER BY trenes DESC",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "showHeader": true
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "% puntual"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "gauge",
+                  "mode": "basic"
+                }
+              },
+              {
+                "id": "min",
+                "value": 0
+              },
+              {
+                "id": "max",
+                "value": 100
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 21,
+      "type": "geomap",
+      "title": "Mapa de trenes (PostgreSQL, v_trenes_ahora)",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "postgres-practica3"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 51,
+        "w": 14,
+        "h": 12
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "postgres-practica3"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "SELECT lat, lon, linea || ' ' || nucleo AS linea, categoria, CASE WHEN en_movimiento THEN 'en movimiento' ELSE 'parado' END AS estado, tren, retraso_s AS retraso, parada FROM v_trenes_ahora",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "view": {
+          "id": "coords",
+          "lat": 40.2,
+          "lon": -3.7,
+          "zoom": 6
+        },
+        "basemap": {
+          "type": "default",
+          "name": "Basemap"
+        },
+        "controls": {
+          "showZoom": true,
+          "mouseWheelZoom": true,
+          "showAttribution": true
+        },
+        "tooltip": {
+          "mode": "details"
+        },
+        "layers": [
+          {
+            "type": "markers",
+            "name": "Trenes",
+            "tooltip": true,
+            "location": {
+              "mode": "coords",
+              "latitude": "lat",
+              "longitude": "lon"
+            },
+            "config": {
+              "showLegend": true,
+              "style": {
+                "size": {
+                  "fixed": 7,
+                  "min": 7,
+                  "max": 7
+                },
+                "color": {
+                  "field": "retraso",
+                  "fixed": "dark-green"
+                },
+                "opacity": 0.85
+              }
+            }
+          }
+        ]
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 60
+              },
+              {
+                "color": "orange",
+                "value": 300
+              },
+              {
+                "color": "red",
+                "value": 600
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 22,
+      "type": "table",
+      "title": "Trenes mas retrasados ahora (v_trenes_ahora)",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "postgres-practica3"
+      },
+      "gridPos": {
+        "x": 14,
+        "y": 51,
+        "w": 10,
+        "h": 12
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "postgres-practica3"
+          },
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "SELECT linea || ' ' || nucleo AS \"Linea\", tren AS \"Tren\", retraso_s AS \"Retraso\", parada AS \"Siguiente parada\" FROM v_trenes_ahora WHERE retraso_s IS NOT NULL ORDER BY retraso_s DESC LIMIT 15",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "showHeader": true
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Retraso"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 60
+                    },
+                    {
+                      "color": "orange",
+                      "value": 300
+                    },
+                    {
+                      "color": "red",
+                      "value": 600
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "thresholds"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
